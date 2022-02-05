@@ -1,24 +1,38 @@
 """
 Same as take_04_model_run, but where the dispatch is not as manual.
 """
-from extrude.crude import KT, StoreName, Mall
+
+import os
+
 from crude.extrude_crude.extrude_crude_util import np, apply_model
 from crude.extrude_crude.extrude_crude_util import mall as mall_contents
 
-from py2store import QuickStore
-from py2store.stores.local_store import mk_tmp_quick_store_dirpath
-import os
+from dol.filesys import mk_tmp_dol_dir
+from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
+
+# def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
+#     rootdir = rootdir or mk_tmp_quick_store_dirpath("crude_takes")
+#     print(rootdir)
+#     mall = dict()
+#     for k, store_contents in mall_contents.items():
+#         mall[k] = QuickStore(os.path.join(rootdir, k))
+#         mall[k].update(store_contents)
+#     return mall
 
 
-def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
-    rootdir = rootdir or mk_tmp_quick_store_dirpath()
-    mall = dict()
-    for k, store_contents in mall_contents.items():
-        mall[k] = QuickStore(os.path.join(rootdir, k))
-        mall[k].update(store_contents)
-    return mall
+# class ReadOnlyDict(dict):
+#     def __setitem__(self, k):
+#         if k in self:
 
-mall = mk_mall()
+# mall = mk_mall()
+from collections import ChainMap
+rootdir = mk_tmp_dol_dir("crude_take_06")
+print(rootdir)
+# Here we want to use the RAM mall_contents for fvs and fitted_models, but
+# a dill mall (persisted) for model_results
+ram_stores = mall_contents
+persisting_stores = mk_mall_of_dill_stores('model_results', rootdir=rootdir)
+mall = dict(mall_contents, **persisting_stores)
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
