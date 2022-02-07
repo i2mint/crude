@@ -60,10 +60,17 @@ def simple_mall_dispatch_core_func(
     elif action == "get":
         return store[key]
 
+from enum import Enum
+
+
+class MallActions(Enum):
+    list = 'list'
+    get = 'get'
+
 
 # TODO: the function doesn't see updates made to mall. Fix.
 # Just the partial (with mall set), but without mall arg visible (or will be dispatched)
-def explore_mall(key: KT, action: str, store_name: StoreName):
+def explore_mall(key: KT, action: MallActions, store_name: StoreName):
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
@@ -79,12 +86,32 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
 # )
 # mall_exploration_func.__name__ = "explore_mall"
 
+
+
 if __name__ == "__main__":
     from crude.util import ignore_import_problems
 
     with ignore_import_problems:
-        from streamlitfront.base import dispatch_funcs
         from functools import partial
+
+        class MallActions(Enum):
+            list = 'list'
+            get = 'get'
+
+        import streamlit as st
+        import streamlit_pydantic as sp
+        from streamlitfront.base import dispatch_funcs, BasePageFunc
+        from opyratorfront.py2pydantic import func_to_pyd_input_model_cls
+        from pydantic import BaseModel, Field
+
+        # TODO: the function doesn't see updates made to mall. Fix.
+        # Just the partial (with mall set), but without mall arg visible (or will be
+        # dispatched)
+        def explore_mall(key: KT, action: MallActions, store_name: StoreName):
+            return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
+
+        def foo(x: str):
+            return x * 2
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
             apply_model, store_for_param=mall, output_store_name="model_results"
@@ -95,5 +122,25 @@ if __name__ == "__main__":
             fitted_model="fitted_model_1",
             fvs="test_fvs",
         )
-        app = dispatch_funcs([dispatchable_apply_model, explore_mall])
+
+        from i2 import name_of_obj
+
+        class SimplePageFuncPydanticWrite(BasePageFunc):
+            def __call__(self, state):
+                self.prepare_view(state)
+                mymodel = func_to_pyd_input_model_cls(self.func)
+                name = name_of_obj(self.func)
+
+                data = sp.pydantic_form(key=f"my_form_{name}", model=mymodel)
+                # data = sp.pydantic_input(key=f"my_form_{name}", model=mymodel)
+
+                if data:
+                    st.write(self.func(**data))
+
+
+        configs = {"page_factory": SimplePageFuncPydanticWrite}
+        app = dispatch_funcs([dispatchable_apply_model, explore_mall, foo],
+                             configs=configs)
         app()
+
+
