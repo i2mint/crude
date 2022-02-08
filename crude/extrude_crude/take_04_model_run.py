@@ -22,8 +22,23 @@ def apply_model(fitted_model: FittedModel, fvs: FVs, method="transform"):
 # ---------------------------------------------------------------------------------------
 # The stores that will be used -- here, all stores are just dictionaries, but the
 # contract is with the typing.Mapping (read-only here) interface.
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
-from crude.extrude_crude.extrude_crude_util import mall, np
+mall = dict(
+    fvs=dict(  # Mapping[FVsKey, FVs]
+        train_fvs_1=np.array([[1], [2], [3], [5], [4], [2], [1], [4], [3]]),
+        train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
+        test_fvs=np.array([[1], [5], [3], [10], [-5]]),
+    ),
+    fitted_model=dict(  # Mapping[FittedModelKey, FittedModel]
+        fitted_model_1=MinMaxScaler().fit(
+            [[1], [2], [3], [5], [4], [2], [1], [4], [3]]
+        ),
+        fitted_model_2=MinMaxScaler().fit([[1], [10], [5], [3], [4]]),
+    ),
+    model_results=dict(),  # Mapping[ResultKey, Result]
+)
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:

@@ -27,8 +27,14 @@ from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 # mall = mk_mall()
 from collections import ChainMap
 
-rootdir = mk_tmp_dol_dir("crude_take_06")
-print(rootdir)
+this_filename, *_ = os.path.splitext(__file__)
+this_filename = os.path.basename(this_filename)
+print(this_filename)
+rootdir = mk_tmp_dol_dir(this_filename)
+print(f"\n****************************************************")
+print(f"The data will be saved here: {rootdir}")
+print(f"****************************************************")
+
 # Here we want to use the RAM mall_contents for fvs and fitted_models, but
 # a dill mall (persisted) for model_results
 ram_stores = mall_contents
@@ -135,7 +141,7 @@ if __name__ == "__main__":
                 # data = sp.pydantic_input(key=f"my_form_{name}", model=mymodel)
 
                 if data:
-                    st.write(self.func(**data))
+                    st.write(self.func(**dict(data)))
 
 
         configs = {"page_factory": SimplePageFuncPydanticWrite}

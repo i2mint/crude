@@ -20,7 +20,7 @@ def store_wrapped_func(salary: SalaryKey, n_months: int = 12):
     return func(salary, n_months)
 
 
-assert store_wrapped_func("sylvain", 6) == 60000
+assert store_wrapped_func("sylvain", 6) == 60000 == func(10000, 6)
 
 
 if __name__ == "__main__":
