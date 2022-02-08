@@ -60,12 +60,13 @@ def simple_mall_dispatch_core_func(
     elif action == "get":
         return store[key]
 
+
 from enum import Enum
 
 
 class MallActions(Enum):
-    list = 'list'
-    get = 'get'
+    list = "list"
+    get = "get"
 
 
 # TODO: the function doesn't see updates made to mall. Fix.
@@ -87,7 +88,6 @@ def explore_mall(key: KT, action: MallActions, store_name: StoreName):
 # mall_exploration_func.__name__ = "explore_mall"
 
 
-
 if __name__ == "__main__":
     from crude.util import ignore_import_problems
 
@@ -95,8 +95,8 @@ if __name__ == "__main__":
         from functools import partial
 
         class MallActions(Enum):
-            list = 'list'
-            get = 'get'
+            list = "list"
+            get = "get"
 
         import streamlit as st
         import streamlit_pydantic as sp
@@ -110,7 +110,7 @@ if __name__ == "__main__":
         def explore_mall(key: KT, action: MallActions, store_name: StoreName):
             return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
-        def foo(x: str):
+        def foo(x: str) -> str:
             return x * 2
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
@@ -135,12 +135,11 @@ if __name__ == "__main__":
                 # data = sp.pydantic_input(key=f"my_form_{name}", model=mymodel)
 
                 if data:
-                    st.write(self.func(**data))
-
+                    st.write(self.func(**dict(data)))
+                    # st.json(data.json())
 
         configs = {"page_factory": SimplePageFuncPydanticWrite}
-        app = dispatch_funcs([dispatchable_apply_model, explore_mall, foo],
-                             configs=configs)
+        app = dispatch_funcs(
+            [foo, dispatchable_apply_model, explore_mall, foo], configs=configs
+        )
         app()
-
-
