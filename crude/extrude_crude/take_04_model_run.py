@@ -97,6 +97,7 @@ if __name__ == "__main__":
         from streamlitfront.base import dispatch_funcs
 
         funcs = [prepare_for_dispatch(apply_model)]
-        dispatch_funcs(funcs)
+        app = dispatch_funcs(funcs)
+        app()
         # app = dispatch_funcs(funcs, {'style': {'root_dir': os.path.dirname(os.path.realpath(__file__))}})
         # app.run_server(debug=True)

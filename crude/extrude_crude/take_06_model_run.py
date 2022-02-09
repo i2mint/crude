@@ -75,7 +75,7 @@ if __name__ == "__main__":
         from functools import partial
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model, store_for_param=mall, output_store_name="model_results"
+            apply_model, store_for_param=mall, output_store="model_results"
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(
