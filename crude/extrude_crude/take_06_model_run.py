@@ -10,23 +10,6 @@ from crude.extrude_crude.extrude_crude_util import mall as mall_contents
 from dol.filesys import mk_tmp_dol_dir
 from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 
-# def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
-#     rootdir = rootdir or mk_tmp_quick_store_dirpath("crude_takes")
-#     print(rootdir)
-#     mall = dict()
-#     for k, store_contents in mall_contents.items():
-#         mall[k] = QuickStore(os.path.join(rootdir, k))
-#         mall[k].update(store_contents)
-#     return mall
-
-
-# class ReadOnlyDict(dict):
-#     def __setitem__(self, k):
-#         if k in self:
-
-# mall = mk_mall()
-from collections import ChainMap
-
 rootdir = mk_tmp_dol_dir("crude_take_06")
 print(rootdir)
 # Here we want to use the RAM mall_contents for fvs and fitted_models, but
@@ -39,12 +22,17 @@ mall = dict(mall_contents, **persisting_stores)
 # dispatchable function:
 from extrude.crude import prepare_for_crude_dispatch
 
-f = prepare_for_crude_dispatch(apply_model, mall)
-assert all(
-    f("fitted_model_1", "test_fvs") == np.array([[0.0], [1.0], [0.5], [2.25], [-1.5]])
+f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
+assert (
+    f('fitted_model_1', 'test_fvs')
+    == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
+    == apply_model(
+        fitted_model=f.store_for_param['fitted_model']['fitted_model_1'],
+        fvs=f.store_for_param['fvs']['test_fvs']
+    )
 )
 
-
+# POC to dispatch store
 def simple_mall_dispatch_core_func(
     key: KT, action: str, store_name: StoreName, mall: Mall
 ):

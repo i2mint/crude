@@ -45,9 +45,14 @@ mall = dict(mall_contents, **persisting_stores)
 # dispatchable function:
 from extrude.crude import prepare_for_crude_dispatch
 
-f = prepare_for_crude_dispatch(apply_model, mall)
-assert all(
-    f("fitted_model_1", "test_fvs") == np.array([[0.0], [1.0], [0.5], [2.25], [-1.5]])
+f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
+assert (
+    f("fitted_model_1", "test_fvs")
+    == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
+    == apply_model(
+        fitted_model=f.store_for_param["fitted_model"]["fitted_model_1"],
+        fvs=f.store_for_param["fvs"]["test_fvs"],
+    )
 )
 
 
@@ -80,18 +85,6 @@ class MallActions(Enum):
 def explore_mall(key: KT, action: MallActions, store_name: StoreName):
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
-
-# Attempt to do this wit i2.wrapper
-# from functools import partial
-# from i2.wrapper import remove_params_ingress_factory, wrap
-#
-# without_mall_param = partial(
-#     wrap, ingress=partial(remove_params_ingress_factory, params_to_remove="mall")
-# )
-# mall_exploration_func = without_mall_param(
-#     partial(simple_mall_dispatch_core_func, mall=mall)
-# )
-# mall_exploration_func.__name__ = "explore_mall"
 
 
 if __name__ == "__main__":
@@ -136,7 +129,6 @@ if __name__ == "__main__":
                 self.prepare_view(state)
                 mymodel = func_to_pyd_input_model_cls(self.func)
                 name = name_of_obj(self.func)
-
                 data = sp.pydantic_form(key=f"my_form_{name}", model=mymodel)
                 # data = sp.pydantic_input(key=f"my_form_{name}", model=mymodel)
 
@@ -147,4 +139,5 @@ if __name__ == "__main__":
         app = dispatch_funcs(
             [foo, dispatchable_apply_model, explore_mall, foo], configs=configs
         )
+        print(app)
         app()
