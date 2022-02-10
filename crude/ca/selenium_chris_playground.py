@@ -41,13 +41,13 @@ def te_chris(url=DFLT_URL,
     print('SELENIUM TEST DONE')
     driver.quit()
 
-import os
 import streamlit.bootstrap
-from streamlit import config as _config
+from importlib_resources import files   # pip install importlib-resources
+
 
 def start_app():
-
-    app_path = '/Users/Christian.Avart/Dropbox/PycharmProjects/oto3/crude/crude/ca/chris_playground.py'
+    t = files('crude')
+    app_path = t.joinpath('ca/chris_playground.py')
     streamlit.bootstrap.run(app_path, command_line='', args=[], flag_options={})
 
 if __name__ == "__main__":
