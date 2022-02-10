@@ -8,6 +8,7 @@ from crude.extrude_crude.extrude_crude_util import np, apply_model
 from crude.extrude_crude.extrude_crude_util import mall as mall_contents
 
 from dol.filesys import mk_tmp_dol_dir
+from front.util import iterable_to_enum
 from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 
 # def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
@@ -43,7 +44,7 @@ mall = dict(mall_contents, **persisting_stores)
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
-from extrude.crude import prepare_for_crude_dispatch
+from front.crude import prepare_for_crude_dispatch
 
 f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
 assert (
@@ -72,48 +73,25 @@ def simple_mall_dispatch_core_func(
         return store[key]
 
 
-from enum import Enum
-
-
-class MallActions(Enum):
-    list = "list"
-    get = "get"
-
-
-# TODO: the function doesn't see updates made to mall. Fix.
-# Just the partial (with mall set), but without mall arg visible (or will be dispatched)
-def explore_mall(key: KT, action: MallActions, store_name: StoreName):
-    return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
-
-
-
 if __name__ == "__main__":
     from crude.util import ignore_import_problems
 
     with ignore_import_problems:
         from functools import partial
-
-        class MallActions(Enum):
-            list = "list"
-            get = "get"
-
-        import streamlit as st
-        import streamlit_pydantic as sp
-        from streamlitfront.base import dispatch_funcs, BasePageFunc
-        from opyratorfront.py2pydantic import func_to_pyd_input_model_cls
-        from pydantic import BaseModel, Field
+        from streamlitfront.base import dispatch_funcs
 
         # TODO: the function doesn't see updates made to mall. Fix.
         # Just the partial (with mall set), but without mall arg visible (or will be
         # dispatched)
-        def explore_mall(key: KT, action: MallActions, store_name: StoreName):
+        def explore_mall(
+            key: KT,
+            action: iterable_to_enum(["list", "get"], "MallActions"),
+            store_name: StoreName,
+        ):
             return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
-        def foo(x: str) -> str:
-            return x * 2
-
         dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model, store_for_param=mall, output_store_name="model_results"
+            apply_model, store_for_param=mall, output_store="model_results"
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(
@@ -122,22 +100,9 @@ if __name__ == "__main__":
             fvs="test_fvs",
         )
 
-        from i2 import name_of_obj
-
-        class SimplePageFuncPydanticWrite(BasePageFunc):
-            def __call__(self, state):
-                self.prepare_view(state)
-                mymodel = func_to_pyd_input_model_cls(self.func)
-                name = name_of_obj(self.func)
-                data = sp.pydantic_form(key=f"my_form_{name}", model=mymodel)
-                # data = sp.pydantic_input(key=f"my_form_{name}", model=mymodel)
-
-                if data:
-                    st.write(self.func(**dict(data)))
+        from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
         configs = {"page_factory": SimplePageFuncPydanticWrite}
-        app = dispatch_funcs(
-            [foo, dispatchable_apply_model, explore_mall, foo], configs=configs
-        )
+        app = dispatch_funcs([dispatchable_apply_model, explore_mall], configs=configs)
         print(app)
         app()

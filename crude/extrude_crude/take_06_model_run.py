@@ -20,7 +20,7 @@ mall = dict(mall_contents, **persisting_stores)
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
-from extrude.crude import prepare_for_crude_dispatch
+from front.crude import prepare_for_crude_dispatch
 
 f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
 assert (

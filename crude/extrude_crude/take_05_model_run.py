@@ -6,7 +6,7 @@ from crude.extrude_crude.extrude_crude_util import mall, np, apply_model
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
-from extrude.crude import prepare_for_crude_dispatch
+from front.crude import prepare_for_crude_dispatch
 
 f = prepare_for_crude_dispatch(apply_model, mall)
 assert all(
