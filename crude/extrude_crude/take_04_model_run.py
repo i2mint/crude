@@ -43,7 +43,7 @@ mall = dict(
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
 
-from extrude.crude import auto_key
+from front.crude import auto_key
 
 
 def prepare_for_dispatch(func):

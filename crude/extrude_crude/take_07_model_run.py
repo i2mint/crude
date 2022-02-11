@@ -9,7 +9,7 @@ from crude.extrude_crude.extrude_crude_util import mall as mall_contents
 
 from dol.filesys import mk_tmp_dol_dir
 from front.util import iterable_to_enum
-from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
+from front.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 
 # def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
 #     rootdir = rootdir or mk_tmp_quick_store_dirpath("crude_takes")

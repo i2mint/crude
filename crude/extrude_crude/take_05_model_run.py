@@ -1,7 +1,7 @@
 """
 Same as take_04_model_run, but where the dispatch is not as manual.
 """
-from extrude.crude import KT, StoreName, Mall
+from front.crude import KT, StoreName, Mall
 from crude.extrude_crude.extrude_crude_util import mall, np, apply_model
 
 # ---------------------------------------------------------------------------------------
