@@ -4,7 +4,7 @@ Same as take_04_model_run, but where the dispatch is not as manual.
 
 import os
 
-from crude.extrude_crude.extrude_crude_util import np, apply_model
+from crude.extrude_crude.extrude_crude_util import apply_model, learn_model
 from crude.extrude_crude.extrude_crude_util import mall as mall_contents
 
 from dol.filesys import mk_tmp_dol_dir
@@ -46,13 +46,15 @@ mall = dict(mall_contents, **persisting_stores)
 # dispatchable function:
 from front.crude import prepare_for_crude_dispatch
 
-f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
+w_apply_model = prepare_for_crude_dispatch(
+    apply_model, ["fvs", "fitted_model"], mall=mall, include_store_for_param=True
+)
 assert (
-    f("fitted_model_1", "test_fvs")
+    w_apply_model("fitted_model_1", "test_fvs")
     == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
     == apply_model(
-        fitted_model=f.store_for_param["fitted_model"]["fitted_model_1"],
-        fvs=f.store_for_param["fvs"]["test_fvs"],
+        fitted_model=w_apply_model.store_for_param["fitted_model"]["fitted_model_1"],
+        fvs=w_apply_model.store_for_param["fvs"]["test_fvs"],
     )
 )
 
@@ -91,7 +93,10 @@ if __name__ == "__main__":
             return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model, store_for_param=mall, output_store="model_results"
+            apply_model,
+            ["fvs", "fitted_model"],
+            mall=mall,
+            # output_store="model_results"
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(

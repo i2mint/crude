@@ -22,7 +22,12 @@ mall = dict(mall_contents, **persisting_stores)
 # dispatchable function:
 from front.crude import prepare_for_crude_dispatch
 
-f = prepare_for_crude_dispatch(apply_model, mall, include_store_for_param=True)
+f = prepare_for_crude_dispatch(
+    apply_model,
+    param_to_mall_key_dict={'fitted_model': 'fitted_model', 'fvs': 'fvs'},
+    mall=mall,
+    include_store_for_param=True
+)
 assert (
     f('fitted_model_1', 'test_fvs')
     == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
@@ -75,7 +80,7 @@ if __name__ == "__main__":
         from functools import partial
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model, store_for_param=mall, output_store="model_results"
+            apply_model, ['fvs', 'fitted_model'], mall=mall, output_store="model_results"
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(
