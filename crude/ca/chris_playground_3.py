@@ -2,12 +2,10 @@
 Same as take_04_model_run, but where the dispatch is not as manual.
 """
 
-import os
 import numpy as np
 from dol.filesys import mk_tmp_dol_dir
-from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
+from front.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.decomposition import PCA
 
 
 # ---------------------------------------------------------------------------------------
@@ -91,9 +89,8 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
 
 
 if __name__ == "__main__":
-    from extrude.crude import prepare_for_crude_dispatch
+    from front.crude import prepare_for_crude_dispatch
     from streamlitfront.base import dispatch_funcs
-    from functools import partial
 
     dispatchable_select_model = prepare_for_crude_dispatch(
         select_model,
