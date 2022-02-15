@@ -71,9 +71,10 @@ mall = dict(
 mall_with_learners = dict(
     mall,
     **dict(
-        MinMaxScaler=MinMaxScaler(),
-        StandardScaler=StandardScaler(),
-        PCA=PCA(),
+        learner_store=dict(
+            MinMaxScaler=MinMaxScaler(),
+            StandardScaler=StandardScaler(),
+            PCA=PCA(),
+        )
     )
-
 )

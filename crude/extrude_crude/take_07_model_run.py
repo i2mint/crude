@@ -1,14 +1,16 @@
 """
-Same as take_04_model_run, but where the dispatch is not as manual.
+Same as take_06_model_run, with additionally:
+- dispatching learn_model
+- introducing iterable_to_enum, inject_enum_annotations (from from front.util)
+
 """
 
 import os
 
 from crude.extrude_crude.extrude_crude_util import apply_model, learn_model
-from crude.extrude_crude.extrude_crude_util import mall as mall_contents
+from crude.extrude_crude.extrude_crude_util import mall_with_learners as mall_contents
 
 from dol.filesys import mk_tmp_dol_dir
-from front.util import iterable_to_enum
 from front.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 
 # def mk_mall(rootdir=None, mall_contents=mall_contents) -> Mall:
@@ -38,7 +40,7 @@ print(f"****************************************************")
 
 # Here we want to use the RAM mall_contents for fvs and fitted_models, but
 # a dill mall (persisted) for model_results
-ram_stores = mall_contents
+# ram_stores = mall_contents
 persisting_stores = mk_mall_of_dill_stores("model_results", rootdir=rootdir)
 mall = dict(mall_contents, **persisting_stores)
 
@@ -59,44 +61,31 @@ assert (
 )
 
 
-def simple_mall_dispatch_core_func(
-    key: KT, action: str, store_name: StoreName, mall: Mall
-):
-    if not store_name:
-        # if store_name empty, list the store names (i.e. the mall keys)
-        return list(mall)
-    else:  # if not, get the store
-        store = mall[store_name]
-
-    if action == "list":
-        key = key.strip()  # to handle some invisible whitespace that would screw things
-        return list(filter(lambda k: key in k, store))
-    elif action == "get":
-        return store[key]
-
-
 if __name__ == "__main__":
     from crude.util import ignore_import_problems
 
     with ignore_import_problems:
         from functools import partial
         from streamlitfront.base import dispatch_funcs
+        from front.crude import simple_mall_dispatch_core_func
+        from front.util import iterable_to_enum, inject_enum_annotations
+
 
         # TODO: the function doesn't see updates made to mall. Fix.
         # Just the partial (with mall set), but without mall arg visible (or will be
         # dispatched)
         def explore_mall(
             key: KT,
-            action: iterable_to_enum(["list", "get"], "MallActions"),
+            action: str, #iterable_to_enum(["list", "get"], "MallActions"),
             store_name: StoreName,
         ):
             return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
             apply_model,
-            ["fvs", "fitted_model"],
+            param_to_mall_key_dict=["fvs", "fitted_model"],
             mall=mall,
-            # output_store="model_results"
+            output_store="model_results"
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(
@@ -105,9 +94,33 @@ if __name__ == "__main__":
             fvs="test_fvs",
         )
 
+        dispatchable_learn_model = prepare_for_crude_dispatch(
+            learn_model,
+            param_to_mall_key_dict={'learner': 'learner_store', 'fvs': 'fvs'},
+            mall=mall,
+            output_store="fitted_model"
+        )
+
+        # inject an Enum (fed by mall['learners']) in learners arg
+        dispatchable_learn_model = inject_enum_annotations(
+            dispatchable_learn_model,
+            learner=list(mall['learner_store'])
+        )
+
+        # # extra, to get some defaults in:
+        # dispatchable_learn_model = partial(
+        #     dispatchable_learn_model,
+        #     fitted_model="fitted_model_1",
+        #     fvs="test_fvs",
+        # )
+
         from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
         configs = {"page_factory": SimplePageFuncPydanticWrite}
-        app = dispatch_funcs([dispatchable_apply_model, explore_mall], configs=configs)
+        app = dispatch_funcs([
+            dispatchable_apply_model,
+            explore_mall,
+            dispatchable_learn_model
+        ], configs=configs)
         print(app)
         app()
