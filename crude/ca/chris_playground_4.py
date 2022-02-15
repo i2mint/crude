@@ -78,8 +78,8 @@ if __name__ == "__main__":
 
     dispatchable_learn_model = prepare_for_crude_dispatch(
         learn_model,
-        mall=mall,
         param_to_mall_key_dict=dict(learner='learner', fvs='fvs'),
+        mall=mall,
         output_store="fitted_model"
     )
 
@@ -90,8 +90,9 @@ if __name__ == "__main__":
     )
 
     dispatchable_apply_model = prepare_for_crude_dispatch(
-        apply_model, mall=mall,
+        apply_model,
         param_to_mall_key_dict=dict(fitted_model='fitted_model', fvs='fvs'),
+        mall=mall,
         output_store="model_results",
         save_name_param='save_name_for_apply_model')
 
