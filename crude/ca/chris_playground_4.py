@@ -2,12 +2,11 @@
 Same as take_04_model_run, but where the dispatch is not as manual.
 """
 
-import os
 import numpy as np
-from dol.filesys import mk_tmp_dol_dir
-from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
+from front.crude import KT, StoreName, Mall
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
+from omodel.outliers.pystroll import OutlierModel as Stroll
 
 
 # ---------------------------------------------------------------------------------------
@@ -27,9 +26,10 @@ def parametrize_and_save_pca(n_components: int):
     return PCA(n_components=n_components,
                random_state=None)
 
+def parametrize_and_save_stroll(n_components: int):
+    return Stroll(n_components=n_components)
 
 mall = dict(
-    # n_components={'1': 1, '5': 5},
     learner=dict(MinMaxScaler=MinMaxScaler(),
                  StandardScaler=StandardScaler()),
     fvs=dict(  # Mapping[FVsKey, FVs]
@@ -37,13 +37,13 @@ mall = dict(
         train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
         test_fvs=np.array([[1], [5], [3], [10], [-5]]),
     ),
-    fitted_model=dict(  # Mapping[FittedModelKey, FittedModel]
+    fitted_model=dict(
         fitted_model_1=MinMaxScaler().fit(
             [[1], [2], [3], [5], [4], [2], [1], [4], [3]]
         ),
         fitted_model_2=MinMaxScaler().fit([[1], [10], [5], [3], [4]]),
     ),
-    model_results=dict(),  # Mapping[ResultKey, Result]
+    model_results=dict(),
 )
 
 
@@ -72,7 +72,7 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
 
 
 if __name__ == "__main__":
-    from extrude.crude import prepare_for_crude_dispatch
+    from front.crude import prepare_for_crude_dispatch
     from streamlitfront.base import dispatch_funcs
     from functools import partial
 
@@ -103,7 +103,6 @@ if __name__ == "__main__":
 
     dispatchable_parametrize_and_save_pca = prepare_for_crude_dispatch(
         parametrize_and_save_pca,
-        # param_to_mall_key_dict=dict(n_components='n_components'),
         mall=mall,
         output_store="learner",
         save_name_param='name_for_unfitted_model'
@@ -112,10 +111,23 @@ if __name__ == "__main__":
     dispatchable_parametrize_and_save_pca = partial(dispatchable_parametrize_and_save_pca,
                                                     n_components=5)
 
+    dispatchable_parametrize_and_save_stroll = prepare_for_crude_dispatch(
+        parametrize_and_save_stroll,
+        mall=mall,
+        output_store="learner",
+        save_name_param='name_for_unfitted_model'
+    )
+
+    dispatchable_parametrize_and_save_stroll = partial(dispatchable_parametrize_and_save_stroll,
+                                                      n_components=5)
+
+
     app = dispatch_funcs(
         [dispatchable_apply_model,
          dispatchable_parametrize_and_save_pca,
+         dispatchable_parametrize_and_save_stroll,
          dispatchable_learn_model,
          explore_mall,
          ])
     app()
+
