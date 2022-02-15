@@ -9,6 +9,7 @@ from extrude.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
 
+
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
 
@@ -16,13 +17,21 @@ def apply_model(fitted_model, fvs, method="transform"):
     method_func = getattr(fitted_model, method)
     return method_func(list(fvs)).tolist()
 
+
 def learn_model(learner, fvs, method="fit"):
     method_func = getattr(learner, method)
     return method_func(list(fvs))
 
+
+def parametrize_and_save_pca(n_components: int):
+    return PCA(n_components=n_components,
+               random_state=None)
+
+
 mall = dict(
+    # n_components={'1': 1, '5': 5},
     learner=dict(MinMaxScaler=MinMaxScaler(),
-                     StandardScaler=StandardScaler()),
+                 StandardScaler=StandardScaler()),
     fvs=dict(  # Mapping[FVsKey, FVs]
         train_fvs_1=np.array([[1], [2], [3], [5], [4], [2], [1], [4], [3]]),
         train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
@@ -37,17 +46,11 @@ mall = dict(
     model_results=dict(),  # Mapping[ResultKey, Result]
 )
 
-rootdir = mk_tmp_dol_dir("crude_take_06")
-print(rootdir)
-# Here we want to use the RAM mall_contents for fvs and fitted_models, but
-# a dill mall (persisted) for model_results
-ram_stores = mall
-persisting_stores = mk_mall_of_dill_stores("model_results", rootdir=rootdir)
-mall = dict(mall, **persisting_stores)
+
 
 # POC to dispatch store
 def simple_mall_dispatch_core_func(
-    key: KT, action: str, store_name: StoreName, mall: Mall
+        key: KT, action: str, store_name: StoreName, mall: Mall
 ):
     if not store_name:
         # if store_name empty, list the store names (i.e. the mall keys)
@@ -68,38 +71,51 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
-
 if __name__ == "__main__":
     from extrude.crude import prepare_for_crude_dispatch
     from streamlitfront.base import dispatch_funcs
     from functools import partial
-    param_to_mall_key_dict = dict(learner='learner', fvs='fvs')
 
-    dispatchable_learn_model = prepare_for_crude_dispatch(learn_model,
+    dispatchable_learn_model = prepare_for_crude_dispatch(
+        learn_model,
         mall=mall,
-        param_to_mall_key_dict=param_to_mall_key_dict,
+        param_to_mall_key_dict=dict(learner='learner', fvs='fvs'),
         output_store="fitted_model"
     )
 
-    param_to_mall_key_dict = dict(fitted_model='fitted_model', fvs='fvs')
-
-    dispatchable_apply_model = prepare_for_crude_dispatch(
-        apply_model, mall=mall,
-        param_to_mall_key_dict=param_to_mall_key_dict,
-        output_store="model_results",
-        save_name_param='save_name_for_apply_model'
-    )
     dispatchable_learn_model = partial(
         dispatchable_learn_model,
         learner="StandardScaler",
         fvs="test_fvs",
     )
 
-    # extra, to get some defaults in:
+    dispatchable_apply_model = prepare_for_crude_dispatch(
+        apply_model, mall=mall,
+        param_to_mall_key_dict=dict(fitted_model='fitted_model', fvs='fvs'),
+        output_store="model_results",
+        save_name_param='save_name_for_apply_model')
+
     dispatchable_apply_model = partial(
         dispatchable_apply_model,
         fitted_model="fitted_model_1",
-        fvs="test_fvs",
+        fvs="test_fvs", )
+
+
+    dispatchable_parametrize_and_save_pca = prepare_for_crude_dispatch(
+        parametrize_and_save_pca,
+        # param_to_mall_key_dict=dict(n_components='n_components'),
+        mall=mall,
+        output_store="learner",
+        save_name_param='name_for_unfitted_model'
     )
-    app = dispatch_funcs([dispatchable_apply_model, dispatchable_learn_model, explore_mall])
+
+    dispatchable_parametrize_and_save_pca = partial(dispatchable_parametrize_and_save_pca,
+                                                    n_components=5)
+
+    app = dispatch_funcs(
+        [dispatchable_apply_model,
+         dispatchable_parametrize_and_save_pca,
+         dispatchable_learn_model,
+         explore_mall,
+         ])
     app()
