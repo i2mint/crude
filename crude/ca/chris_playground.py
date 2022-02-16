@@ -24,7 +24,7 @@ assert store_wrapped_func("sylvain", 6) == 60000 == func(10000, 6)
 
 if __name__ == "__main__":
 
-    print('starting app')
+    print("starting app")
     from crude.util import ignore_import_problems
 
     with ignore_import_problems:
@@ -32,4 +32,4 @@ if __name__ == "__main__":
 
         app = dispatch_funcs([func, store_wrapped_func])
         app()
-    print('app closed')
+    print("app closed")

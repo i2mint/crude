@@ -25,6 +25,7 @@ assert store_wrapped_func("sylvain", 6) == 60000 == func(10000, 6)
 
 if __name__ == "__main__":
     from crude.util import ignore_import_problems
+
     with ignore_import_problems:
         from streamlitfront.base import dispatch_funcs
 

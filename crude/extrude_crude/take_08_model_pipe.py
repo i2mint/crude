@@ -49,7 +49,10 @@ mall = dict(mall_contents, **persisting_stores)
 from front.crude import prepare_for_crude_dispatch
 
 w_apply_model = prepare_for_crude_dispatch(
-    apply_model, ["fvs", "fitted_model"], mall=mall, include_store_for_param=True
+    apply_model,
+    param_to_mall_map=["fvs", "fitted_model"],
+    mall=mall,
+    include_stores_attribute=True,
 )
 assert (
     w_apply_model("fitted_model_1", "test_fvs")
@@ -60,67 +63,79 @@ assert (
     )
 )
 
+from functools import partial
+from streamlitfront.base import dispatch_funcs
+from front.crude import simple_mall_dispatch_core_func
+from front.util import iterable_to_enum, inject_enum_annotations
+
+
+# TODO: the function doesn't see updates made to mall. Fix.
+# Just the partial (with mall set), but without mall arg visible (or will be
+# dispatched)
+@inject_enum_annotations(action=["list", "get"])
+def explore_mall(
+    key: KT,
+    action: str,
+    store_name: StoreName,
+):
+    return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
+
+
+dispatchable_apply_model = prepare_for_crude_dispatch(
+    apply_model,
+    param_to_mall_map=["fvs", "fitted_model"],
+    mall=mall,
+    output_store="model_results",
+)
+dispatchable_apply_model = inject_enum_annotations(
+    dispatchable_apply_model,
+    fvs=mall["fvs"],
+    fitted_model=mall["fitted_model"],
+)
+# extra, to get some defaults in:
+dispatchable_apply_model = partial(
+    dispatchable_apply_model,
+    fitted_model="fitted_model_1",
+    fvs="test_fvs",
+)
+
+from i2 import Pipe
+
+mk_dispatchable = Pipe(
+    prepare_for_crude_dispatch(
+        param_to_mall_map={"learner": "learner_store", "fvs": "fvs"},
+        mall=mall,
+        output_store="fitted_model",
+    ),
+    # inject_enum_annotations(
+    #     learner=mall["learner_store"],
+    #     fvs=mall["fvs"],
+    # ),
+)
+
+dispatchable_learn_model = mk_dispatchable(learn_model)
+
+
+# inject an Enum (fed by mall['learners']) in learners arg
+# dispatchable_learn_model = inject_enum_annotations(
+#     dispatchable_learn_model, learner=list(mall["learner_store"])
+# )
 
 if __name__ == "__main__":
-    from crude.util import ignore_import_problems
 
-    with ignore_import_problems:
-        from functools import partial
-        from streamlitfront.base import dispatch_funcs
-        from front.crude import simple_mall_dispatch_core_func
-        from front.util import iterable_to_enum, inject_enum_annotations
+    # # extra, to get some defaults in:
+    # dispatchable_learn_model = partial(
+    #     dispatchable_learn_model,
+    #     fitted_model="fitted_model_1",
+    #     fvs="test_fvs",
+    # )
 
+    from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
-        # TODO: the function doesn't see updates made to mall. Fix.
-        # Just the partial (with mall set), but without mall arg visible (or will be
-        # dispatched)
-        def explore_mall(
-            key: KT,
-            action: str, #iterable_to_enum(["list", "get"], "MallActions"),
-            store_name: StoreName,
-        ):
-            return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
-
-        dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model,
-            param_to_mall_key_dict=["fvs", "fitted_model"],
-            mall=mall,
-            output_store="model_results"
-        )
-        # extra, to get some defaults in:
-        dispatchable_apply_model = partial(
-            dispatchable_apply_model,
-            fitted_model="fitted_model_1",
-            fvs="test_fvs",
-        )
-
-        dispatchable_learn_model = prepare_for_crude_dispatch(
-            learn_model,
-            param_to_mall_key_dict={'learner': 'learner_store', 'fvs': 'fvs'},
-            mall=mall,
-            output_store="fitted_model"
-        )
-
-        # inject an Enum (fed by mall['learners']) in learners arg
-        dispatchable_learn_model = inject_enum_annotations(
-            dispatchable_learn_model,
-            learner=list(mall['learner_store'])
-        )
-
-        # # extra, to get some defaults in:
-        # dispatchable_learn_model = partial(
-        #     dispatchable_learn_model,
-        #     fitted_model="fitted_model_1",
-        #     fvs="test_fvs",
-        # )
-
-        from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
-
-        configs = {"page_factory": SimplePageFuncPydanticWrite}
-        app = dispatch_funcs([
-            dispatchable_apply_model,
-            explore_mall,
-            dispatchable_learn_model
-        ], configs=configs)
-        print(app)
-        app()
+    configs = {"page_factory": SimplePageFuncPydanticWrite}
+    app = dispatch_funcs(
+        [dispatchable_apply_model, explore_mall, dispatchable_learn_model],
+        configs=configs,
+    )
+    print(app)
+    app()

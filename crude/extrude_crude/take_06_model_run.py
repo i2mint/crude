@@ -24,16 +24,15 @@ from front.crude import prepare_for_crude_dispatch
 
 f = prepare_for_crude_dispatch(
     apply_model,
-    param_to_mall_key_dict={'fitted_model': 'fitted_model', 'fvs': 'fvs'},
+    param_to_mall_map={"fitted_model": "fitted_model", "fvs": "fvs"},
     mall=mall,
-    include_store_for_param=True
 )
 assert (
-    f('fitted_model_1', 'test_fvs')
+    f("fitted_model_1", "test_fvs")
     == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
     == apply_model(
-        fitted_model=f.store_for_param['fitted_model']['fitted_model_1'],
-        fvs=f.store_for_param['fvs']['test_fvs']
+        fitted_model=f.store_for_param["fitted_model"]["fitted_model_1"],
+        fvs=f.store_for_param["fvs"]["test_fvs"],
     )
 )
 
@@ -80,7 +79,10 @@ if __name__ == "__main__":
         from functools import partial
 
         dispatchable_apply_model = prepare_for_crude_dispatch(
-            apply_model, ['fvs', 'fitted_model'], mall=mall, output_store="model_results"
+            apply_model,
+            param_to_mall_map=["fvs", "fitted_model"],
+            mall=mall,
+            output_store="model_results",
         )
         # extra, to get some defaults in:
         dispatchable_apply_model = partial(

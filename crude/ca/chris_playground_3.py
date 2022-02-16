@@ -13,13 +13,13 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 def select_model(model_name):
-    if model_name == 'pca':
-        model_kwargs = {'n_components'}
+    if model_name == "pca":
+        model_kwargs = {"n_components"}
     return model_kwargs
 
 
 def make_select_model_params(mall):
-    selected_model_params = mall['selected_model_params']
+    selected_model_params = mall["selected_model_params"]
 
     def select_model_params(**selected_model_params):
         pass
@@ -38,9 +38,8 @@ def learn_model(learner, fvs, method="fit"):
 
 
 mall = dict(
-    model_name=dict(pca='pca', lda='lda'),
-    learner=dict(MinMaxScaler=MinMaxScaler(),
-                 StandardScaler=StandardScaler()),
+    model_name=dict(pca="pca", lda="lda"),
+    learner=dict(MinMaxScaler=MinMaxScaler(), StandardScaler=StandardScaler()),
     fvs=dict(
         train_fvs_1=np.array([[1], [2], [3], [5], [4], [2], [1], [4], [3]]),
         train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
@@ -53,7 +52,7 @@ mall = dict(
         fitted_model_2=MinMaxScaler().fit([[1], [10], [5], [3], [4]]),
     ),
     model_results=dict(),
-    selected_model_params=dict()
+    selected_model_params=dict(),
 )
 
 rootdir = mk_tmp_dol_dir("crude_take_06")
@@ -67,7 +66,7 @@ mall = dict(mall, **persisting_stores)
 
 # POC to dispatch store
 def simple_mall_dispatch_core_func(
-        key: KT, action: str, store_name: StoreName, mall: Mall
+    key: KT, action: str, store_name: StoreName, mall: Mall
 ):
     if not store_name:
         # if store_name empty, list the store names (i.e. the mall keys)
@@ -94,22 +93,22 @@ if __name__ == "__main__":
 
     dispatchable_select_model = prepare_for_crude_dispatch(
         select_model,
+        param_to_mall_map=dict(model_name="model_name"),
         mall=mall,
-        param_to_mall_key_dict=dict(model_name='model_name'),
         output_store="selected_model_params",
-        save_name_param='save_name_selected_model_params'
+        save_name_param="save_name_selected_model_params",
     )
 
     # dispatchable_learn_model = prepare_for_crude_dispatch(
     #     learn_model,
     #     mall=mall,
-    #     param_to_mall_key_dict=dict(learner='learner', fvs='fvs'),
+    #     param_to_mall_map=dict(learner='learner', fvs='fvs'),
     #     output_store="fitted_model"
     # )
     #
     # dispatchable_apply_model = prepare_for_crude_dispatch(
     #     apply_model, mall=mall,
-    #     param_to_mall_key_dict=dict(fitted_model='fitted_model', fvs='fvs'),
+    #     param_to_mall_map=dict(fitted_model='fitted_model', fvs='fvs'),
     #     output_store="model_results",
     #     save_name_param='save_name_for_apply_model'
     # )
@@ -129,12 +128,13 @@ if __name__ == "__main__":
     select_model_params = make_select_model_params(mall=mall)
     dispatchable_select_model_params = prepare_for_crude_dispatch(
         select_model_params,
+        param_to_mall_map=dict(selected_model_params="selected_model_params"),
         mall=mall,
-        param_to_mall_key_dict=dict(selected_model_params='selected_model_params'),
     )
 
     app = dispatch_funcs(
-        [dispatchable_select_model, dispatchable_select_model_params, explore_mall])
-         # dispatchable_learn_model, dispatchable_apply_model,
-         # explore_mall])
+        [dispatchable_select_model, dispatchable_select_model_params, explore_mall]
+    )
+    # dispatchable_learn_model, dispatchable_apply_model,
+    # explore_mall])
     app()

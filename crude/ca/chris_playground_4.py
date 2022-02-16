@@ -12,6 +12,7 @@ from omodel.outliers.pystroll import OutlierModel as Stroll
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
 
+
 def apply_model(fitted_model, fvs, method="transform"):
     method_func = getattr(fitted_model, method)
     return method_func(list(fvs)).tolist()
@@ -23,15 +24,15 @@ def learn_model(learner, fvs, method="fit"):
 
 
 def parametrize_and_save_pca(n_components: int):
-    return PCA(n_components=n_components,
-               random_state=None)
+    return PCA(n_components=n_components, random_state=None)
+
 
 def parametrize_and_save_stroll(n_components: int):
     return Stroll(n_components=n_components)
 
+
 mall = dict(
-    learner=dict(MinMaxScaler=MinMaxScaler(),
-                 StandardScaler=StandardScaler()),
+    learner=dict(MinMaxScaler=MinMaxScaler(), StandardScaler=StandardScaler()),
     fvs=dict(  # Mapping[FVsKey, FVs]
         train_fvs_1=np.array([[1], [2], [3], [5], [4], [2], [1], [4], [3]]),
         train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
@@ -47,10 +48,9 @@ mall = dict(
 )
 
 
-
 # POC to dispatch store
 def simple_mall_dispatch_core_func(
-        key: KT, action: str, store_name: StoreName, mall: Mall
+    key: KT, action: str, store_name: StoreName, mall: Mall
 ):
     if not store_name:
         # if store_name empty, list the store names (i.e. the mall keys)
@@ -78,9 +78,9 @@ if __name__ == "__main__":
 
     dispatchable_learn_model = prepare_for_crude_dispatch(
         learn_model,
-        param_to_mall_key_dict=dict(learner='learner', fvs='fvs'),
+        param_to_mall_map=dict(learner="learner", fvs="fvs"),
         mall=mall,
-        output_store="fitted_model"
+        output_store="fitted_model",
     )
 
     dispatchable_learn_model = partial(
@@ -91,44 +91,47 @@ if __name__ == "__main__":
 
     dispatchable_apply_model = prepare_for_crude_dispatch(
         apply_model,
-        param_to_mall_key_dict=dict(fitted_model='fitted_model', fvs='fvs'),
+        param_to_mall_map=dict(fitted_model="fitted_model", fvs="fvs"),
         mall=mall,
         output_store="model_results",
-        save_name_param='save_name_for_apply_model')
+        save_name_param="save_name_for_apply_model",
+    )
 
     dispatchable_apply_model = partial(
         dispatchable_apply_model,
         fitted_model="fitted_model_1",
-        fvs="test_fvs", )
-
+        fvs="test_fvs",
+    )
 
     dispatchable_parametrize_and_save_pca = prepare_for_crude_dispatch(
         parametrize_and_save_pca,
         mall=mall,
         output_store="learner",
-        save_name_param='name_for_unfitted_model'
+        save_name_param="name_for_unfitted_model",
     )
 
-    dispatchable_parametrize_and_save_pca = partial(dispatchable_parametrize_and_save_pca,
-                                                    n_components=5)
+    dispatchable_parametrize_and_save_pca = partial(
+        dispatchable_parametrize_and_save_pca, n_components=5
+    )
 
     dispatchable_parametrize_and_save_stroll = prepare_for_crude_dispatch(
         parametrize_and_save_stroll,
         mall=mall,
         output_store="learner",
-        save_name_param='name_for_unfitted_model'
+        save_name_param="name_for_unfitted_model",
     )
 
-    dispatchable_parametrize_and_save_stroll = partial(dispatchable_parametrize_and_save_stroll,
-                                                      n_components=5)
-
+    dispatchable_parametrize_and_save_stroll = partial(
+        dispatchable_parametrize_and_save_stroll, n_components=5
+    )
 
     app = dispatch_funcs(
-        [dispatchable_apply_model,
-         dispatchable_parametrize_and_save_pca,
-         dispatchable_parametrize_and_save_stroll,
-         dispatchable_learn_model,
-         explore_mall,
-         ])
+        [
+            dispatchable_apply_model,
+            dispatchable_parametrize_and_save_pca,
+            dispatchable_parametrize_and_save_stroll,
+            dispatchable_learn_model,
+            explore_mall,
+        ]
+    )
     app()
-

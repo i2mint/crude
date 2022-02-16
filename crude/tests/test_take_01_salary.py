@@ -11,7 +11,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
-class Test():
+class Test:
     def setup_method(self, method):
         self.driver = webdriver.Chrome()
         self.vars = {}
@@ -22,12 +22,22 @@ class Test():
     def test(self):
         self.driver.get("http://localhost:8501/")
         self.driver.set_window_size(1792, 1097)
-        self.driver.find_element(By.CSS_SELECTOR, ".element-container:nth-child(2) .st-ci .st-ci").click()
-        self.driver.find_element(By.CSS_SELECTOR, ".element-container:nth-child(2) .st-ci .st-ci").send_keys("10.00")
-        self.driver.find_element(By.CSS_SELECTOR, ".element-container:nth-child(3) .st-ci .st-ci").click()
-        self.driver.find_element(By.CSS_SELECTOR, ".element-container:nth-child(3) .st-ci .st-ci").send_keys("20")
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".element-container:nth-child(2) .st-ci .st-ci"
+        ).click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".element-container:nth-child(2) .st-ci .st-ci"
+        ).send_keys("10.00")
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".element-container:nth-child(3) .st-ci .st-ci"
+        ).click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".element-container:nth-child(3) .st-ci .st-ci"
+        ).send_keys("20")
         self.driver.find_element(By.CSS_SELECTOR, ".css-ns78wr").click()
-        self.driver.find_element(By.CSS_SELECTOR, ".st-bh:nth-child(2) > .st-cc").click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".st-bh:nth-child(2) > .st-cc"
+        ).click()
         self.driver.find_element(By.CSS_SELECTOR, ".st-dp").click()
         self.driver.find_element(By.CSS_SELECTOR, ".st-dp").send_keys("christian")
         element = self.driver.find_element(By.CSS_SELECTOR, ".css-ns78wr")
@@ -37,4 +47,3 @@ class Test():
         element = self.driver.find_element(By.CSS_SELECTOR, "body")
         actions = ActionChains(self.driver)
         actions.move_to_element(element, 0, 0).perform()
-

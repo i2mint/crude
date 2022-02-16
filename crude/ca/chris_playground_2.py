@@ -10,17 +10,19 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
 
+
 def apply_model(fitted_model, fvs, method="transform"):
     method_func = getattr(fitted_model, method)
     return method_func(list(fvs)).tolist()
+
 
 def learn_model(learner, fvs, method="fit"):
     method_func = getattr(learner, method)
     return method_func(list(fvs))
 
+
 mall = dict(
-    learner=dict(MinMaxScaler=MinMaxScaler(),
-                     StandardScaler=StandardScaler()),
+    learner=dict(MinMaxScaler=MinMaxScaler(), StandardScaler=StandardScaler()),
     fvs=dict(  # Mapping[FVsKey, FVs]
         train_fvs_1=np.array([[1], [2], [3], [5], [4], [2], [1], [4], [3]]),
         train_fvs_2=np.array([[1], [10], [5], [3], [4]]),
@@ -66,26 +68,28 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
-
 if __name__ == "__main__":
     from front.crude import prepare_for_crude_dispatch
     from streamlitfront.base import dispatch_funcs
     from functools import partial
-    param_to_mall_key_dict = dict(learner='learner', fvs='fvs')
 
-    dispatchable_learn_model = prepare_for_crude_dispatch(learn_model,
+    param_to_mall_key_dict = dict(learner="learner", fvs="fvs")
+
+    dispatchable_learn_model = prepare_for_crude_dispatch(
+        learn_model,
+        param_to_mall_map=param_to_mall_key_dict,
         mall=mall,
-        param_to_mall_key_dict=param_to_mall_key_dict,
-        output_store="fitted_model"
+        output_store="fitted_model",
     )
 
-    param_to_mall_key_dict = dict(fitted_model='fitted_model', fvs='fvs')
+    param_to_mall_key_dict = dict(fitted_model="fitted_model", fvs="fvs")
 
     dispatchable_apply_model = prepare_for_crude_dispatch(
-        apply_model, mall=mall,
-        param_to_mall_key_dict=param_to_mall_key_dict,
+        apply_model,
+        param_to_mall_map=param_to_mall_key_dict,
+        mall=mall,
         output_store="model_results",
-        save_name_param='save_name_for_apply_model'
+        save_name_param="save_name_for_apply_model",
     )
     dispatchable_learn_model = partial(
         dispatchable_learn_model,
@@ -99,5 +103,7 @@ if __name__ == "__main__":
         fitted_model="fitted_model_1",
         fvs="test_fvs",
     )
-    app = dispatch_funcs([dispatchable_apply_model, dispatchable_learn_model, explore_mall])
+    app = dispatch_funcs(
+        [dispatchable_apply_model, dispatchable_learn_model, explore_mall]
+    )
     app()

@@ -23,25 +23,23 @@ def mk_choices_from_store(store):
 
 
 if __name__ == "__main__":
-    from crude.util import ignore_import_problems
+    from streamlitfront.base import dispatch_funcs
+    from pydantic import BaseModel, Field, ValidationError, parse_obj_as
+    from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
-    with ignore_import_problems:
-        from streamlitfront.base import dispatch_funcs
-        from pydantic import BaseModel, Field, ValidationError, parse_obj_as
-        from front.scrap.pydantic_wrap import SimplePageFuncPydanticWrite
+    class ChoiceModel(BaseModel):
+        single_selection: mk_choices_from_store(salary_store) = Field(
+            ..., description="Only select a single item from a set."
+        )
 
-        class ChoiceModel(BaseModel):
-            single_selection: mk_choices_from_store(salary_store) = Field(
-                ..., description="Only select a single item from a set."
-            )
+    configs = {"page_factory": SimplePageFuncPydanticWrite}
 
-        configs = {"page_factory": SimplePageFuncPydanticWrite}
+    def wrapped_func(selection: ChoiceModel, n_months: int):
+        # print(f"{type(selection)=}, {selection=}")
+        selection = selection.single_selection.value
+        salary_val = salary_store[selection]
 
-        def wrapped_func(selection: ChoiceModel, n_months: int):
-            selection = selection["single_selection"]
-            salary_val = salary_store[selection]
+        return func(salary_val, n_months)
 
-            return func(salary_val, n_months)
-
-        app = dispatch_funcs([func, wrapped_func], configs=configs)
-        app()
+    app = dispatch_funcs([func, wrapped_func], configs=configs)
+    app()
