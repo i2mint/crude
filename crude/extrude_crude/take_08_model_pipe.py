@@ -81,14 +81,15 @@ def explore_mall(
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
-dispatchable_apply_model = prepare_for_crude_dispatch(
+dispatchable_apply_model_1 = prepare_for_crude_dispatch(
     apply_model,
     param_to_mall_map=["fvs", "fitted_model"],
     mall=mall,
     output_store="model_results",
 )
+# dispatchable_apply_model = dispatchable_apply_model_1
 dispatchable_apply_model = inject_enum_annotations(
-    dispatchable_apply_model,
+    dispatchable_apply_model_1,
     fvs=mall["fvs"],
     fitted_model=mall["fitted_model"],
 )
@@ -107,10 +108,10 @@ mk_dispatchable = Pipe(
         mall=mall,
         output_store="fitted_model",
     ),
-    # inject_enum_annotations(
-    #     learner=mall["learner_store"],
-    #     fvs=mall["fvs"],
-    # ),
+    inject_enum_annotations(
+        learner=mall["learner_store"],
+        fvs=mall["fvs"],
+    ),
 )
 
 dispatchable_learn_model = mk_dispatchable(learn_model)
@@ -133,9 +134,14 @@ if __name__ == "__main__":
     from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
     configs = {"page_factory": SimplePageFuncPydanticWrite}
+
     app = dispatch_funcs(
-        [dispatchable_apply_model, explore_mall, dispatchable_learn_model],
+        [dispatchable_apply_model, dispatchable_learn_model] + [explore_mall],
         configs=configs,
     )
+    # print(app)
     print(app)
+    print(__file__)
     app()
+
+
