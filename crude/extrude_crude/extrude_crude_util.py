@@ -16,8 +16,12 @@ Learner = Any
 #  parameters (names, annotations, defaults).
 # TODO: apply_model and learn_model both have the same structure, just different
 #  parameters (names, annotations, defaults), so...
-#  Could make them from i2.wrapper tools. Should is a diffrent question though.
+#  Could make them from i2.wrapper tools. Should is a different question though.
 
+
+def learn_model(learner: Learner, fvs: FVs, method="fit"):
+    method_func = getattr(learner, method)
+    return method_func(list(fvs))
 
 def apply_model(fitted_model: FittedModel, fvs: FVs, method="transform"):
     method_func = getattr(fitted_model, method)
@@ -25,10 +29,6 @@ def apply_model(fitted_model: FittedModel, fvs: FVs, method="transform"):
     #  Not concern here.
     return method_func(list(fvs)).tolist()
 
-
-def learn_model(learner: Learner, fvs: FVs, method="fit"):
-    method_func = getattr(learner, method)
-    return method_func(list(fvs))
 
 
 # TODO: Make a sklearn-free and numpy-free version?

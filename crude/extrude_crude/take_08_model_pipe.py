@@ -66,7 +66,7 @@ assert (
 from functools import partial
 from front.crude import simple_mall_dispatch_core_func
 from front.util import iterable_to_enum, inject_enum_annotations
-
+from front.base import prepare_for_dispatch
 
 # TODO: the function doesn't see updates made to mall. Fix.
 # Just the partial (with mall set), but without mall arg visible (or will be
@@ -80,54 +80,6 @@ def explore_mall(
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
-def prepare_for_dispatch(
-        func,
-        param_to_mall_map=(),
-        *,
-        mall=None,
-        output_store=None,
-        defaults=()
-):
-    from i2 import Pipe
-    from front.crude import keys_to_values_if_non_mapping_iterable
-    param_to_mall_map = keys_to_values_if_non_mapping_iterable(param_to_mall_map)
-
-    # wrapper = Pipe(
-    #     crude_dispatch=prepare_for_crude_dispatch(
-    #         param_to_mall_map=param_to_mall_map,
-    #         mall=mall,
-    #         output_store=output_store,
-    #     ),
-    #     # enumify=inject_enum_annotations(
-    #     #     **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
-    #     # ),
-    # )
-    # wrapped_func = wrapper(func)
-
-    wrapped_func = func
-
-    wrapped_func = prepare_for_crude_dispatch(
-            wrapped_func,
-            param_to_mall_map=param_to_mall_map,
-            mall=mall,
-            output_store=output_store,
-        )
-
-    # TODO: When I add this, it breaks:
-    wrapped_func = inject_enum_annotations(
-        wrapped_func,
-        extract_enum_value=True,
-        **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
-    )
-
-    # extra, to get some defaults in:
-    if defaults:
-        wrapped_func = partial(
-            wrapped_func,
-            **dict(defaults)
-        )
-
-    return wrapped_func
 
 
 dispatchable_learn_model = prepare_for_dispatch(
@@ -194,7 +146,7 @@ if __name__ == "__main__":
     configs = {"page_factory": SimplePageFuncPydanticWrite}
 
     app = dispatch_funcs(
-        [dispatchable_apply_model, dispatchable_learn_model] + [explore_mall],
+        [dispatchable_learn_model, dispatchable_apply_model] + [explore_mall],
         configs=configs,
     )
     # print(app)
