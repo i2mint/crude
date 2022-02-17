@@ -1,14 +1,29 @@
 """Utils for buildup"""
-
+import os
 from typing import Any
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
 import numpy as np
+from dol.filesys import mk_tmp_dol_dir
 
 # Being lazy with the definition of these:
 FVs = Any
 FittedModel = Any
 Learner = Any
+
+
+def get_a_root_directory_for_module_and_mk_tmp_dir_for_it(module_path, verbose=True):
+    if not isinstance(module_path, str) or not os.path.isdir(module_path):
+        module_path = module_path.__file__  # assuming it's an object with a __file__
+
+    this_filename, *_ = os.path.splitext(module_path)
+    this_filename = os.path.basename(this_filename)
+    rootdir = mk_tmp_dol_dir(this_filename)
+    if verbose:
+        print(f"\n****************************************************")
+        print(f"A temp directory was made for {this_filename}")
+        print(f"The data will be saved here: {rootdir}")
+        print(f"****************************************************")
 
 # ---------------------------------------------------------------------------------------
 # The function(ality) we want to dispatch:
@@ -23,11 +38,13 @@ def learn_model(learner: Learner, fvs: FVs, method="fit"):
     method_func = getattr(learner, method)
     return method_func(list(fvs))
 
+
 def apply_model(fitted_model: FittedModel, fvs: FVs, method="transform"):
     method_func = getattr(fitted_model, method)
     # TODO: Should remove .tolist() (and possibly the list of list(fvs)).
     #  Not concern here.
     return method_func(list(fvs)).tolist()
+
 
 
 
@@ -78,3 +95,20 @@ mall_with_learners = dict(
         )
     )
 )
+
+
+def test_dispatch(dispatcher):
+    w_apply_model = dispatcher(
+        apply_model,
+        param_to_mall_map=["fvs", "fitted_model"],
+        mall=mall,
+        include_stores_attribute=True,
+    )
+    assert (
+        w_apply_model("fitted_model_1", "test_fvs")
+        == [[0.0], [1.0], [0.5], [2.25], [-1.5]]
+        == apply_model(
+            fitted_model=w_apply_model.store_for_param["fitted_model"]["fitted_model_1"],
+            fvs=w_apply_model.store_for_param["fvs"]["test_fvs"],
+        )
+    )
