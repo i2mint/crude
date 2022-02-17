@@ -129,10 +129,10 @@ dispatchable_apply_model = prepare_for_dispatch(
     param_to_mall_map=["fvs", "fitted_model"],
     mall=mall,
     output_store="model_results",
-    defaults=dict(
-        fitted_model="fitted_model_1",
-        fvs="test_fvs",
-    )
+    # defaults=dict(
+    #     fitted_model="fitted_model_1",
+    #     fvs="test_fvs",
+    # )
 )
 
 
