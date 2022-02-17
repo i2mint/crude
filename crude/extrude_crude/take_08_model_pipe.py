@@ -11,7 +11,7 @@ from crude.extrude_crude.extrude_crude_util import (
     apply_model,
     learn_model,
     test_dispatch,
-    mall_with_learners as mall_contents
+    mall_with_learners as mall_contents,
     get_a_root_directory_for_module_and_mk_tmp_dir_for_it
 )
 
