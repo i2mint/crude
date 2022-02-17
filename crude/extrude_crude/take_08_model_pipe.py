@@ -64,7 +64,6 @@ assert (
 )
 
 from functools import partial
-from streamlitfront.base import dispatch_funcs
 from front.crude import simple_mall_dispatch_core_func
 from front.util import iterable_to_enum, inject_enum_annotations
 
@@ -81,48 +80,65 @@ def explore_mall(
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
 
-dispatchable_apply_model_1 = prepare_for_crude_dispatch(
+def prepare_for_dispatch(
+        func,
+        param_to_mall_map=(),
+        *,
+        mall=None,
+        output_store=None,
+        defaults=()
+):
+    from i2 import Pipe
+    from front.crude import keys_to_values_if_non_mapping_iterable
+    param_to_mall_map = keys_to_values_if_non_mapping_iterable(param_to_mall_map)
+
+    wrapper = Pipe(
+        crude_dispatch=prepare_for_crude_dispatch(
+            param_to_mall_map=param_to_mall_map,
+            mall=mall,
+            output_store=output_store,
+        ),
+        # enumify=inject_enum_annotations(
+        #     **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
+        # ),
+    )
+    wrapped_func = wrapper(func)
+    # extra, to get some defaults in:
+    if defaults:
+        wrapped_func = partial(
+            wrapped_func,
+            **dict(defaults)
+        )
+
+    return wrapped_func
+
+
+dispatchable_learn_model = prepare_for_dispatch(
+    learn_model,
+    param_to_mall_map={"learner": "learner_store", "fvs": "fvs"},
+    mall=mall,
+    output_store="fitted_model",
+    defaults=dict(
+        learner='StandardScaler',
+        fvs="train_fvs_1",
+    )
+)
+
+dispatchable_apply_model = prepare_for_dispatch(
     apply_model,
     param_to_mall_map=["fvs", "fitted_model"],
     mall=mall,
     output_store="model_results",
-)
-# dispatchable_apply_model = dispatchable_apply_model_1
-dispatchable_apply_model = inject_enum_annotations(
-    dispatchable_apply_model_1,
-    fvs=mall["fvs"],
-    fitted_model=mall["fitted_model"],
-)
-# extra, to get some defaults in:
-dispatchable_apply_model = partial(
-    dispatchable_apply_model,
-    fitted_model="fitted_model_1",
-    fvs="test_fvs",
+    defaults=dict(
+        fitted_model="fitted_model_1",
+        fvs="test_fvs",
+    )
 )
 
-from i2 import Pipe
 
-mk_dispatchable = Pipe(
-    prepare_for_crude_dispatch(
-        param_to_mall_map={"learner": "learner_store", "fvs": "fvs"},
-        mall=mall,
-        output_store="fitted_model",
-    ),
-    inject_enum_annotations(
-        learner=mall["learner_store"],
-        fvs=mall["fvs"],
-    ),
-)
-
-dispatchable_learn_model = mk_dispatchable(learn_model)
-
-
-# inject an Enum (fed by mall['learners']) in learners arg
-# dispatchable_learn_model = inject_enum_annotations(
-#     dispatchable_learn_model, learner=list(mall["learner_store"])
-# )
 
 if __name__ == "__main__":
+    from streamlitfront.base import dispatch_funcs
 
     # # extra, to get some defaults in:
     # dispatchable_learn_model = partial(
