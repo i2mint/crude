@@ -17,7 +17,7 @@ from crude.extrude_crude.extrude_crude_util import (
 
 from front.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
 
-get_a_root_directory_for_module_and_mk_tmp_dir_for_it(__file__)
+rootdir = get_a_root_directory_for_module_and_mk_tmp_dir_for_it(__file__)
 
 # Here we want to use the RAM mall_contents for fvs and fitted_models, but
 # a dill mall (persisted) for model_results

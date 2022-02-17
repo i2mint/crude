@@ -13,8 +13,8 @@ Learner = Any
 
 
 def get_a_root_directory_for_module_and_mk_tmp_dir_for_it(module_path, verbose=True):
-    if not isinstance(module_path, str) or not os.path.isdir(module_path):
-        module_path = module_path.__file__  # assuming it's an object with a __file__
+    # if not (isinstance(module_path, str) and os.path.isdir(module_path)):
+    #     module_path = module_path.__file__  # assuming it's an object with a __file__
 
     this_filename, *_ = os.path.splitext(module_path)
     this_filename = os.path.basename(this_filename)
@@ -24,6 +24,7 @@ def get_a_root_directory_for_module_and_mk_tmp_dir_for_it(module_path, verbose=T
         print(f"A temp directory was made for {this_filename}")
         print(f"The data will be saved here: {rootdir}")
         print(f"****************************************************")
+    return rootdir
 
 # ---------------------------------------------------------------------------------------
 # The function(ality) we want to dispatch:
