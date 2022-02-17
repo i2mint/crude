@@ -92,17 +92,34 @@ def prepare_for_dispatch(
     from front.crude import keys_to_values_if_non_mapping_iterable
     param_to_mall_map = keys_to_values_if_non_mapping_iterable(param_to_mall_map)
 
-    wrapper = Pipe(
-        crude_dispatch=prepare_for_crude_dispatch(
+    # wrapper = Pipe(
+    #     crude_dispatch=prepare_for_crude_dispatch(
+    #         param_to_mall_map=param_to_mall_map,
+    #         mall=mall,
+    #         output_store=output_store,
+    #     ),
+    #     # enumify=inject_enum_annotations(
+    #     #     **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
+    #     # ),
+    # )
+    # wrapped_func = wrapper(func)
+
+    wrapped_func = func
+
+    wrapped_func = prepare_for_crude_dispatch(
+            wrapped_func,
             param_to_mall_map=param_to_mall_map,
             mall=mall,
             output_store=output_store,
-        ),
-        # enumify=inject_enum_annotations(
-        #     **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
-        # ),
+        )
+
+    # TODO: When I add this, it breaks:
+    wrapped_func = inject_enum_annotations(
+        wrapped_func,
+        extract_enum_value=True,
+        **{param: mall[mall_key] for param, mall_key in param_to_mall_map.items()}
     )
-    wrapped_func = wrapper(func)
+
     # extra, to get some defaults in:
     if defaults:
         wrapped_func = partial(
@@ -118,10 +135,10 @@ dispatchable_learn_model = prepare_for_dispatch(
     param_to_mall_map={"learner": "learner_store", "fvs": "fvs"},
     mall=mall,
     output_store="fitted_model",
-    defaults=dict(
-        learner='StandardScaler',
-        fvs="train_fvs_1",
-    )
+    # defaults=dict(
+    #     learner='StandardScaler',
+    #     fvs="train_fvs_1",
+    # )
 )
 
 dispatchable_apply_model = prepare_for_dispatch(
@@ -134,6 +151,31 @@ dispatchable_apply_model = prepare_for_dispatch(
     #     fvs="test_fvs",
     # )
 )
+
+
+# Works:
+
+# dispatchable_learn_model = prepare_for_crude_dispatch(
+#     learn_model,
+#     param_to_mall_map={"learner": "learner_store", "fvs": "fvs"},
+#     mall=mall,
+#     output_store="fitted_model",
+#     # defaults=dict(
+#     #     learner='StandardScaler',
+#     #     fvs="train_fvs_1",
+#     # )
+# )
+#
+# dispatchable_apply_model = prepare_for_crude_dispatch(
+#     apply_model,
+#     param_to_mall_map=["fvs", "fitted_model"],
+#     mall=mall,
+#     output_store="model_results",
+#     # defaults=dict(
+#     #     fitted_model="fitted_model_1",
+#     #     fvs="test_fvs",
+#     # )
+# )
 
 
 
