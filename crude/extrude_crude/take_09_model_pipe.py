@@ -50,24 +50,39 @@ def explore_mall(
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
-from front.util import partialx
+from i2.wrapper import rm_params
 
 # TODO: Again, need for conditional fields
 # TODO: Auto-suggestions and/or resolution of arg problems
 # TODO: Find more systematic and automatic way to deal with arg names conflicting with
 #  Pydantic
+
+
+from i2 import Sig
+fallback_annot_for_param = {
+    'n_components': int,
+}
+
+# # TODO: Add default type resolution too:
+# def insert_annotations(func, fallback_annot_for_param=()):
+#     fallback_annot_for_param = dict(fallback_annot_for_param)
+#     sig = Sig(func)
+#     for p in list(filter(lambda x: x.annotation is Sig.empty, sig.params)):
+#         pass
+
+
 dispatchable_min_max_scaler = prepare_for_dispatch(
-    partialx(MinMaxScaler, copy=True, rm_partialize=True),
+    rm_params(MinMaxScaler, 'copy'),
     output_store=mall["learner_store"],
 )
 
 dispatchable_standard_scaler = prepare_for_dispatch(
-    partialx(StandardScaler, copy=True, rm_partialize=True),
+    rm_params(StandardScaler, 'copy'),
     output_store=mall["learner_store"],
 )
 
 dispatchable_pca = prepare_for_dispatch(
-    partialx(PCA, copy=True, rm_partialize=True), output_store=mall["learner_store"],
+    rm_params(PCA, 'copy'), output_store=mall["learner_store"],
 )
 
 # TODO: param_to_mall_map maker (from list of strings or pairs thereof)
