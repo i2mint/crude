@@ -136,10 +136,10 @@ def explore_mall(key: KT, action: str, store_name: StoreName):
 
 # Attempt to do this wit i2.wrapper
 # from functools import partial
-# from i2.wrapper import remove_params_ingress_factory, wrap
+# from i2.wrapper import rm_params_ingress_factory, wrap
 #
 # without_mall_param = partial(
-#     wrap, ingress=partial(remove_params_ingress_factory, params_to_remove="mall")
+#     wrap, ingress=partial(rm_params_ingress_factory, params_to_remove="mall")
 # )
 # mall_exploration_func = without_mall_param(
 #     partial(simple_mall_dispatch_core_func, mall=mall)
