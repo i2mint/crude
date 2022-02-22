@@ -5,14 +5,14 @@ Same as take_06_model_run, with additionally:
 
 """
 
-import os
+from functools import partial
 
 from crude.extrude_crude.extrude_crude_util import (
     apply_model,
     learn_model,
     test_dispatch,
     mall_with_learners as mall_contents,
-    get_a_root_directory_for_module_and_mk_tmp_dir_for_it
+    get_a_root_directory_for_module_and_mk_tmp_dir_for_it,
 )
 
 from front.crude import KT, StoreName, Mall, mk_mall_of_dill_stores
@@ -23,10 +23,14 @@ rootdir = get_a_root_directory_for_module_and_mk_tmp_dir_for_it(__file__)
 # a dill mall (persisted) for model_results
 # ram_stores = mall_contents
 persisting_stores = mk_mall_of_dill_stores(
-    ["model_results", "learn_store"],
-    rootdir=rootdir
+    ["model_results", "learner_store", "chunkers"], rootdir=rootdir
 )
 mall = dict(mall_contents, **persisting_stores)
+
+# ---------------------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------
 # dispatchable function:
@@ -34,6 +38,31 @@ from front.crude import prepare_for_crude_dispatch
 from front.crude import simple_mall_dispatch_core_func
 from front.util import inject_enum_annotations
 from front.base import prepare_for_dispatch
+
+from i2 import Pipe
+from i2.wrapper import rm_params
+
+from front.util import annotate_func_arguments, iterable_to_enum
+from pydantic import confloat
+from typing import Optional
+
+
+annotator = partial(
+    annotate_func_arguments,
+    annot_for_argname={
+        "n_components": Optional[int],  # TODO: Default should be None
+        "feature_range": confloat(),
+        "iterated_power": int,  # really Union[int, 'auto']
+        "random_state": Optional[int],  # TODO: Default should be None
+        # TODO: Had iterable_to_enum(["auto", "full", "arpack", "randomized"], "SvdSolverChoices"),
+        #  in the following, but led to `Can't pickle <enum 'SvdSolverChoices'>: it's not found as front.util.SvdSolverChoices`
+        #  problem. need to use inject_enum_annotations tech somehow
+        "svd_solver": str,
+        'chk_size': int,
+        'chk_step': Optional[int],
+    },
+    annot_for_dflt_type={bool: bool, int: int, float: float, str: str},
+)
 
 # TODO: Conditional Enums: Selection list of one field based on selection of previous
 # TODO: Deal with long Enums (paging? filtering?)
@@ -48,9 +77,9 @@ def explore_mall(
 ):
     return simple_mall_dispatch_core_func(key, action, store_name, mall=mall)
 
+
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.decomposition import PCA
-from i2.wrapper import rm_params
 
 # TODO: Again, need for conditional fields
 # TODO: Auto-suggestions and/or resolution of arg problems
@@ -58,32 +87,35 @@ from i2.wrapper import rm_params
 #  Pydantic
 
 
-from i2 import Sig
-fallback_annot_for_param = {
-    'n_components': int,
-}
+# TODO: Make it easier to dispatch "function makers" like make_chunker and make_ffter
+# chunker ----------------------------------------------------------------------
 
-# # TODO: Add default type resolution too:
-# def insert_annotations(func, fallback_annot_for_param=()):
-#     fallback_annot_for_param = dict(fallback_annot_for_param)
-#     sig = Sig(func)
-#     for p in list(filter(lambda x: x.annotation is Sig.empty, sig.params)):
-#         pass
+from slang.chunkers import fixed_step_chunker
 
 
-dispatchable_min_max_scaler = prepare_for_dispatch(
-    rm_params(MinMaxScaler, 'copy'),
-    output_store=mall["learner_store"],
+def make_chunker(chk_size: int, chk_step: Optional[int] = None):
+    return partial(fixed_step_chunker, chk_size=chk_size, chk_step=chk_step)
+
+
+chunker = prepare_for_dispatch(
+    make_chunker,
+    output_store=mall["chunkers"],
 )
 
-dispatchable_standard_scaler = prepare_for_dispatch(
-    rm_params(StandardScaler, 'copy'),
-    output_store=mall["learner_store"],
+
+# learners ----------------------------------------------------------------------
+
+MinMaxScaler, StandardScaler, PCA = map(
+    Pipe(
+        rm_params(params_to_remove=["copy"]),
+        annotator,
+        partial(prepare_for_dispatch, output_store=mall["learner_store"]),
+    ),
+    [MinMaxScaler, StandardScaler, PCA],
 )
 
-dispatchable_pca = prepare_for_dispatch(
-    rm_params(PCA, 'copy'), output_store=mall["learner_store"],
-)
+
+# learn model ----------------------------------------------------------------------
 
 # TODO: param_to_mall_map maker (from list of strings or pairs thereof)
 # TODO: automatic mall store enhancer
@@ -95,10 +127,12 @@ dispatchable_learn_model = prepare_for_dispatch(
     mall=mall,
     output_store="fitted_model",
     defaults=dict(
-        learner='StandardScaler',
+        learner="StandardScaler",
         fvs="train_fvs_1",
-    )
+    ),
 )
+
+# apply model ----------------------------------------------------------------------
 
 dispatchable_apply_model = prepare_for_dispatch(
     apply_model,
@@ -108,25 +142,30 @@ dispatchable_apply_model = prepare_for_dispatch(
     defaults=dict(
         fitted_model="fitted_model_1",
         fvs="test_fvs",
-    )
+    ),
 )
 
 
 if __name__ == "__main__":
+
     from streamlitfront.base import dispatch_funcs
     from streamlitfront.page_funcs import SimplePageFuncPydanticWrite
 
     configs = {"page_factory": SimplePageFuncPydanticWrite}
 
     app = dispatch_funcs(
-        [dispatchable_min_max_scaler, dispatchable_standard_scaler, dispatchable_pca]
-        + [dispatchable_learn_model, dispatchable_apply_model]
-        + [explore_mall],
+        [
+            chunker,
+            MinMaxScaler,
+            StandardScaler,
+            PCA,
+            dispatchable_learn_model,
+            dispatchable_apply_model,
+            explore_mall,
+        ],
         configs=configs,
     )
     # print(app)
     print(app)
     print(__file__)
     app()
-
-
