@@ -94,7 +94,7 @@ def prepare_for_crude_dispatch(func, store_for_param=None, output_store_name=Non
                 print(f"{list(store_for_param[output_store_name])=}")
                 return func_output
 
-    wrapped_f = wrap(func, ingress, egress)
+    wrapped_f = wrap(func, ingress=ingress, egress=egress)
 
     return wrapped_f
 
